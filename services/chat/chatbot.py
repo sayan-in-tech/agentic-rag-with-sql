@@ -1,28 +1,41 @@
 from langchain_core.messages import AIMessage, SystemMessage
 from models.schema import State
-from services.llm_connector.llm_connector import llm, retrieve_context
+from services.llm_connector.llm_connector import llm
 
 def chatbot(state: State) -> State:
-    """Handle chatbot interactions with RAG-enhanced prompting"""
+    """Handle chatbot interactions with enhanced prompting"""
     user_msg = state["messages"][-1]
     user_input = user_msg.content
 
-    # Retrieve relevant context from FAISS
-    context = retrieve_context(user_input)
-
+    # Check if we have SQL output from previous execution
+    sql_output = state.get("sql_output", "")
+    
     # Construct prompt for Gemini
-    prompt = f"""
-    Answer the question based on the context provided below. 
-    If the answer is not in the context, say "I don't know".
+    if sql_output:
+        # If we have SQL results, include them in the context
+        prompt = f"""
+        You are a helpful assistant. Answer the user's question based on the SQL results provided below.
+        If the answer is not in the SQL results, provide a helpful response based on your knowledge.
 
-    Context:
-    {context}
+        SQL Results:
+        {sql_output}
 
-    Question:
-    {user_input}
+        Question:
+        {user_input}
 
-    Answer:
-    """
+        Answer:
+        """
+    else:
+        # Standard assistant prompt
+        prompt = f"""
+        You are a helpful assistant. Answer the user's question in a clear and helpful manner.
+        If you don't know the answer, say so.
+
+        Question:
+        {user_input}
+
+        Answer:
+        """
 
     # Stream response from Gemini
     response_text = ""

@@ -1,51 +1,50 @@
 from langchain_core.prompts import ChatPromptTemplate
-from models.schema import State  # Your existing State definition
-
-# Chinook-based schema snippet (you can extend this or load dynamically)
-SCHEMA = """
-Table: Customer
-Columns:
-  - CustomerId (INTEGER) [PK] [NOT NULL]
-  - FirstName (NVARCHAR(40)) [NOT NULL]
-  - LastName (NVARCHAR(20)) [NOT NULL]
-  - Email (NVARCHAR(60)) [NOT NULL]
-  - SupportRepId (INTEGER)
-Foreign Keys:
-  - SupportRepId → Employee.EmployeeId
-
-Table: Invoice
-Columns:
-  - InvoiceId (INTEGER) [PK] [NOT NULL]
-  - CustomerId (INTEGER) [NOT NULL]
-  - InvoiceDate (DATETIME) [NOT NULL]
-  - Total (NUMERIC(10,2)) [NOT NULL]
-Foreign Keys:
-  - CustomerId → Customer.CustomerId
-"""
+from langchain_core.messages import SystemMessage, HumanMessage
+from models.schema import State
+from services.llm_connector.llm_connector import llm, retrieve_context
 
 def generate_sql_query(state: State) -> dict:
     """
-    Generates an SQL query using the provided schema and the latest user message.
+    Generates an SQL query using the database schema from RAG and the latest user message.
+    Uses RAG to retrieve relevant database schema information.
     """
-
+    latest_user_message = state["messages"][-1].content
+    
+    # Retrieve relevant database schema context from RAG
+    rag_context = retrieve_context(latest_user_message)
+    
     system_prompt = """
 You are a world-class SQL expert.
-Using ONLY the following schema, write a correct, optimized SQL query that answers the user’s question.
+Using the database schema information provided below, write a correct, optimized SQL query that answers the user's question.
+Return ONLY the SQL query, no explanations or markdown formatting.
 
-Schema:
-{schema}
+Database Schema Information:
+{rag_context}
+
+User Question: {question}
+
+Generate the SQL query:
 """
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", "{question}")
-    ])
-
-    latest_user_message = state["messages"][-1].content
-
-    return {
-        "messages": prompt.format_messages(
-            schema=SCHEMA,
-            question=latest_user_message
-        )
-    }
+    # Generate SQL using LLM with RAG context
+    try:
+        response = llm.invoke([
+            SystemMessage(content=system_prompt.format(
+                rag_context=rag_context,
+                question=latest_user_message
+            ))
+        ])
+        
+        sql_query = response.content.strip()
+        
+        # Add the generated SQL to the state
+        return {
+            "sql_query": sql_query,
+            "messages": state["messages"] + [SystemMessage(content=f"Generated SQL using RAG context: {sql_query}")]
+        }
+    except Exception as e:
+        error_msg = f"Error generating SQL: {str(e)}"
+        return {
+            "sql_query": "",
+            "messages": state["messages"] + [SystemMessage(content=error_msg)]
+        }

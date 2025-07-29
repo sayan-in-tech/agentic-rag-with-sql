@@ -15,35 +15,34 @@ def graph():
     # Basic nodes
     workflow.add_node("start_node", start_node)
     workflow.add_node("chatbot", chatbot)
-
-    # Classify SQL needed or not
     workflow.add_node("classify_sql_needed_or_not", classify_sql_needed_or_not)
-
-    # Generate SQL query
     workflow.add_node("generate_sql_query", generate_sql_query)
-
-    # Execute SQL query
     workflow.add_node("execute_sql_query", execute_sql_query)
-
-    # Conditional routings
-    workflow.add_conditional_edges(
-        "start_node",
-        route_sql_needed_or_not,
-        {
-            "sql_needed_or_not": "classify_sql_needed_or_not",
-            "no_sql_needed": "chatbot"
-        }
-    )
-    workflow.add_edge("classify_sql_needed_or_not", "generate_sql_query")
-    workflow.add_edge("generate_sql_query", "execute_sql_query")
-    workflow.add_edge("execute_sql_query", "chatbot")
 
     # Set entry point
     workflow.set_entry_point("start_node")
     
+    # Flow: start_node -> chatbot -> classify_sql_needed_or_not
+    workflow.add_edge("start_node", "chatbot")
+    workflow.add_edge("chatbot", "classify_sql_needed_or_not")
+    
+    # Conditional routing from classify_sql_needed_or_not
+    workflow.add_conditional_edges(
+        "classify_sql_needed_or_not",
+        route_sql_needed_or_not,
+        {
+            "generate_sql_query": "generate_sql_query",
+            "chatbot": "chatbot"
+        }
+    )
+    
+    # SQL flow: generate -> execute -> back to chatbot
+    workflow.add_edge("generate_sql_query", "execute_sql_query")
+    workflow.add_edge("execute_sql_query", "chatbot")
+
     # Add terminal edges
     workflow.add_edge("chatbot", END)
 
-    # Compile the graph with increased recursion limit
+    # Compile the graph
     app = workflow.compile()
     return app

@@ -3,9 +3,15 @@ import os
 # Define the environment variables
 
 def set_env_variables():
-    # os.environ["BASE_URL"] = "http://127.0.0.1:1234/v1"
-    # os.environ["API_KEY"] = "lm-studio"
-    os.environ["MODEL"] = "gemini-2.5-flash"
+    # Set the model name consistently
+    os.environ["MODEL"] = "gemini-1.5-pro"
+    
+    # Check if GOOGLE_API_KEY is set in environment
+    if not os.getenv("GOOGLE_API_KEY"):
+        print("Warning: GOOGLE_API_KEY not found in environment variables.")
+        print("Please set your Google API key as an environment variable:")
+        print("export GOOGLE_API_KEY='your-api-key-here'")
+        print("Or create a .env file with: GOOGLE_API_KEY=your-api-key-here")
 
     # Set the prompts for different roles
     os.environ["PROMPT"] = """

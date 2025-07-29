@@ -2,6 +2,24 @@ import sqlite3
 import re
 from typing import List, Dict, Any
 from models.schema import State
+from langchain_core.messages import SystemMessage
+
+def convert_sql_response_to_text(sql_results: str) -> str:
+    """
+    Convert SQL query results to natural language text.
+    This represents the "Convert response to text" step in the flowchart.
+    """
+    if not sql_results:
+        return "No results to convert."
+    
+    # Simple conversion - in a real implementation, you might use an LLM here
+    # to convert the results to more natural language
+    if "Query Results:" in sql_results:
+        return f"Here are the results from your query:\n{sql_results}"
+    elif "Query executed successfully" in sql_results:
+        return f"Your query was executed successfully. {sql_results}"
+    else:
+        return f"Query result: {sql_results}"
 
 def extract_sql_query(state: State) -> str:
     """
@@ -31,13 +49,18 @@ def execute_sql_query(state: State) -> dict:
     """
     Execute a SQL query based on the state and return the results in text format.
     """
-    # Extract SQL query from state
-    sql_query = extract_sql_query(state)
+    # First, try to get SQL from the state
+    sql_query = state.get("sql_query", "")
+    
+    # If not in state, try to extract from messages
+    if not sql_query:
+        sql_query = extract_sql_query(state)
     
     if not sql_query:
         return {
             "status": "error", 
-            "results": "No SQL query found in the conversation. Please provide a valid SQL query."
+            "results": "No SQL query found in the conversation. Please provide a valid SQL query.",
+            "sql_output": "No SQL query available to execute."
         }
     
     try:
@@ -87,22 +110,33 @@ def execute_sql_query(state: State) -> dict:
         # Close connection
         conn.close()
         
+        # Convert results to natural language text
+        natural_language_result = convert_sql_response_to_text(result_text)
+        
         return {
             "status": "success",
             "results": result_text,
             "sql_query": sql_query,
-            "row_count": len(rows)
+            "sql_output": natural_language_result,
+            "row_count": len(rows),
+            "messages": state["messages"] + [SystemMessage(content=natural_language_result)]
         }
         
     except sqlite3.Error as e:
+        error_msg = f"Database error: {str(e)}"
         return {
             "status": "error",
-            "results": f"Database error: {str(e)}",
-            "sql_query": sql_query
+            "results": error_msg,
+            "sql_query": sql_query,
+            "sql_output": error_msg,
+            "messages": state["messages"] + [SystemMessage(content=error_msg)]
         }
     except Exception as e:
+        error_msg = f"Error executing SQL query: {str(e)}"
         return {
             "status": "error", 
-            "results": f"Error executing SQL query: {str(e)}",
-            "sql_query": sql_query
+            "results": error_msg,
+            "sql_query": sql_query,
+            "sql_output": error_msg,
+            "messages": state["messages"] + [SystemMessage(content=error_msg)]
         }  
