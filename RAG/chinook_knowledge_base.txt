@@ -1,0 +1,206 @@
+
+---
+[SCHEMA]
+
+Table: Album
+Columns:
+  - AlbumId (INTEGER) [PK] [NOT NULL]
+  - Title (NVARCHAR(160)) [NOT NULL]
+  - ArtistId (INTEGER) [NOT NULL]
+Foreign Keys:
+  - ArtistId → Artist.ArtistId
+
+---
+Table: Artist
+Columns:
+  - ArtistId (INTEGER) [PK] [NOT NULL]
+  - Name (NVARCHAR(120))
+
+---
+Table: Customer
+Columns:
+  - CustomerId (INTEGER) [PK] [NOT NULL]
+  - FirstName (NVARCHAR(40)) [NOT NULL]
+  - LastName (NVARCHAR(20)) [NOT NULL]
+  - Company (NVARCHAR(80))
+  - Address (NVARCHAR(70))
+  - City (NVARCHAR(40))
+  - State (NVARCHAR(40))
+  - Country (NVARCHAR(40))
+  - PostalCode (NVARCHAR(10))
+  - Phone (NVARCHAR(24))
+  - Fax (NVARCHAR(24))
+  - Email (NVARCHAR(60)) [NOT NULL]
+  - SupportRepId (INTEGER)
+Foreign Keys:
+  - SupportRepId → Employee.EmployeeId
+
+---
+Table: Employee
+Columns:
+  - EmployeeId (INTEGER) [PK] [NOT NULL]
+  - LastName (NVARCHAR(20)) [NOT NULL]
+  - FirstName (NVARCHAR(20)) [NOT NULL]
+  - Title (NVARCHAR(30))
+  - ReportsTo (INTEGER)
+  - BirthDate (DATETIME)
+  - HireDate (DATETIME)
+  - Address (NVARCHAR(70))
+  - City (NVARCHAR(40))
+  - State (NVARCHAR(40))
+  - Country (NVARCHAR(40))
+  - PostalCode (NVARCHAR(10))
+  - Phone (NVARCHAR(24))
+  - Fax (NVARCHAR(24))
+  - Email (NVARCHAR(60))
+Foreign Keys:
+  - ReportsTo → Employee.EmployeeId
+
+---
+Table: Genre
+Columns:
+  - GenreId (INTEGER) [PK] [NOT NULL]
+  - Name (NVARCHAR(120))
+
+---
+Table: Invoice
+Columns:
+  - InvoiceId (INTEGER) [PK] [NOT NULL]
+  - CustomerId (INTEGER) [NOT NULL]
+  - InvoiceDate (DATETIME) [NOT NULL]
+  - BillingAddress (NVARCHAR(70))
+  - BillingCity (NVARCHAR(40))
+  - BillingState (NVARCHAR(40))
+  - BillingCountry (NVARCHAR(40))
+  - BillingPostalCode (NVARCHAR(10))
+  - Total (NUMERIC(10,2)) [NOT NULL]
+Foreign Keys:
+  - CustomerId → Customer.CustomerId
+
+---
+Table: InvoiceLine
+Columns:
+  - InvoiceLineId (INTEGER) [PK] [NOT NULL]
+  - InvoiceId (INTEGER) [NOT NULL]
+  - TrackId (INTEGER) [NOT NULL]
+  - UnitPrice (NUMERIC(10,2)) [NOT NULL]
+  - Quantity (INTEGER) [NOT NULL]
+Foreign Keys:
+  - TrackId → Track.TrackId
+  - InvoiceId → Invoice.InvoiceId
+
+---
+Table: MediaType
+Columns:
+  - MediaTypeId (INTEGER) [PK] [NOT NULL]
+  - Name (NVARCHAR(120))
+
+---
+Table: Playlist
+Columns:
+  - PlaylistId (INTEGER) [PK] [NOT NULL]
+  - Name (NVARCHAR(120))
+
+---
+Table: PlaylistTrack
+Columns:
+  - PlaylistId (INTEGER) [PK] [NOT NULL]
+  - TrackId (INTEGER) [PK] [NOT NULL]
+Foreign Keys:
+  - TrackId → Track.TrackId
+  - PlaylistId → Playlist.PlaylistId
+
+---
+Table: Track
+Columns:
+  - TrackId (INTEGER) [PK] [NOT NULL]
+  - Name (NVARCHAR(200)) [NOT NULL]
+  - AlbumId (INTEGER)
+  - MediaTypeId (INTEGER) [NOT NULL]
+  - GenreId (INTEGER)
+  - Composer (NVARCHAR(220))
+  - Milliseconds (INTEGER) [NOT NULL]
+  - Bytes (INTEGER)
+  - UnitPrice (NUMERIC(10,2)) [NOT NULL]
+Foreign Keys:
+  - MediaTypeId → MediaType.MediaTypeId
+  - GenreId → Genre.GenreId
+  - AlbumId → Album.AlbumId
+---
+[BUSINESS LOGIC]
+
+- Revenue per customer = SUM(Invoice.Total) GROUP BY CustomerId
+- Churned customers = Customers who haven't purchased in the last 12 months
+- Top-selling genre = COUNT(InvoiceLine.TrackId) JOIN Track → Genre
+- Most valuable customer = MAX(SUM(Invoice.Total)) GROUP BY CustomerId
+- Employee hierarchy = Employee.ReportsTo forms a tree structure of managers
+- Playlist popularity = COUNT(PlaylistTrack.TrackId) GROUP BY PlaylistId
+- Monthly revenue = SUM(Invoice.Total) GROUP BY strftime('%Y-%m', InvoiceDate)
+- Artist revenue = SUM(UnitPrice * Quantity) JOIN Track → Album → Artist
+
+---
+[EXAMPLE QUERIES]
+
+Q: Which artist generated the highest sales?
+SQL:
+SELECT a.Name, SUM(il.UnitPrice * il.Quantity) AS TotalSales
+FROM InvoiceLine il
+JOIN Track t ON il.TrackId = t.TrackId
+JOIN Album al ON t.AlbumId = al.AlbumId
+JOIN Artist a ON al.ArtistId = a.ArtistId
+GROUP BY a.Name
+ORDER BY TotalSales DESC
+LIMIT 1;
+
+---
+
+Q: Who are the top 5 customers by total spend?
+SQL:
+SELECT c.FirstName || ' ' || c.LastName AS CustomerName, SUM(i.Total) AS TotalSpent
+FROM Customer c
+JOIN Invoice i ON c.CustomerId = i.CustomerId
+GROUP BY c.CustomerId
+ORDER BY TotalSpent DESC
+LIMIT 5;
+
+---
+
+Q: What is the most popular genre by track count?
+SQL:
+SELECT g.Name, COUNT(t.TrackId) AS TrackCount
+FROM Track t
+JOIN Genre g ON t.GenreId = g.GenreId
+GROUP BY g.GenreId
+ORDER BY TrackCount DESC
+LIMIT 1;
+
+---
+
+Q: How much revenue was generated each month?
+SQL:
+SELECT strftime('%Y-%m', InvoiceDate) AS Month, SUM(Total) AS Revenue
+FROM Invoice
+GROUP BY Month
+ORDER BY Month;
+
+---
+
+Q: Which employee manages the most customers?
+SQL:
+SELECT e.FirstName || ' ' || e.LastName AS RepName, COUNT(c.CustomerId) AS NumCustomers
+FROM Customer c
+JOIN Employee e ON c.SupportRepId = e.EmployeeId
+GROUP BY e.EmployeeId
+ORDER BY NumCustomers DESC
+LIMIT 1;
+
+---
+
+Q: Which tracks appear in the most playlists?
+SQL:
+SELECT t.Name, COUNT(*) AS PlaylistCount
+FROM PlaylistTrack pt
+JOIN Track t ON pt.TrackId = t.TrackId
+GROUP BY pt.TrackId
+ORDER BY PlaylistCount DESC
+LIMIT 5;
