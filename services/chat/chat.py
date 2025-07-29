@@ -3,11 +3,11 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from services.llm_connector.llm_connector import llm
 from graph.graph import graph
 
-# Initialize the graph
-app = graph()
-
 def run_chatbot():
     """Run the chatbot application"""
+    # Initialize the graph inside the function to ensure latest modules are used
+    app = graph()
+    
     state: State = {
         "messages": [],
         "memory": []

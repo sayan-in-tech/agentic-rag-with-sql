@@ -26,31 +26,24 @@ def generate_sql_query(state: State) -> dict:
     except Exception as e:
         rag_context = f"Error retrieving schema context: {str(e)}"
     
-    system_prompt = """
-You are a world-class SQL expert.
+    system_prompt = f"""You are a world-class SQL expert.
 Using the database schema information provided below, write a correct, optimized SQL query that answers the user's question.
 Return ONLY the SQL query, no explanations or markdown formatting.
 
 Database Schema Information:
-{rag_context}
-
-User Question: {question}
-
-Generate the SQL query:
-"""
+{rag_context}"""
 
     # Generate SQL using LLM with RAG context
     try:
         if llm is None:
             raise ValueError("LLM not available")
             
-        response = llm.invoke([
-            SystemMessage(content=system_prompt.format(
-                rag_context=rag_context,
-                question=latest_user_message
-            ))
-        ])
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Generate SQL query for: {latest_user_message}")
+        ]
         
+        response = llm.invoke(messages)
         sql_query = response.content.strip()
         
         # Validate generated SQL

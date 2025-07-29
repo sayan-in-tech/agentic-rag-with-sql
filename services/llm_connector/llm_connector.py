@@ -8,7 +8,7 @@ from config.config import set_env_variables
 set_env_variables()
 
 def load_llm():
-    """Initialize the Gemini 2.5 Pro model"""
+    """Initialize the Gemini 1.5 Pro model"""
     try:
         # Check if API key is available
         api_key = os.getenv("GOOGLE_API_KEY")
