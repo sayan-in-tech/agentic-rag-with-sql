@@ -4,6 +4,9 @@ from models.schema import State
 from routes.routes import *
 from services.chat.chatbot import chatbot
 from services.classifiers import *
+from services.sql.generate_sql_query import generate_sql_query
+from services.sql.execute_sql_query import execute_sql_query
+from services.classifiers.classify_sql_needed_or_not import classify_sql_needed_or_not
 
 def graph():
     # Build the graph
