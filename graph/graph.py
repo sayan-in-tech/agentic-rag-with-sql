@@ -13,7 +13,27 @@ def graph():
     workflow.add_node("start_node", start_node)
     workflow.add_node("chatbot", chatbot)
 
-    # Logic nodes
+    # Classify SQL needed or not
+    workflow.add_node("classify_sql_needed_or_not", classify_sql_needed_or_not)
+
+    # Generate SQL query
+    workflow.add_node("generate_sql_query", generate_sql_query)
+
+    # Execute SQL query
+    workflow.add_node("execute_sql_query", execute_sql_query)
+
+    # Conditional routings
+    workflow.add_conditional_edges(
+        "start_node",
+        route_sql_needed_or_not,
+        {
+            "sql_needed_or_not": "classify_sql_needed_or_not",
+            "no_sql_needed": "chatbot"
+        }
+    )
+    workflow.add_edge("classify_sql_needed_or_not", "generate_sql_query")
+    workflow.add_edge("generate_sql_query", "execute_sql_query")
+    workflow.add_edge("execute_sql_query", "chatbot")
 
     # Set entry point
     workflow.set_entry_point("start_node")
