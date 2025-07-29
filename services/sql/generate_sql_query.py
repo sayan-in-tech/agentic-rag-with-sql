@@ -50,6 +50,13 @@ Database Schema Information:
         if not sql_query or sql_query.lower() in ['', 'none', 'null', 'no sql generated']:
             raise ValueError("No valid SQL query was generated")
         
+        # Print the generated SQL query for verification
+        print(f"\n🔍 Generated SQL Query:")
+        print(f"```sql")
+        print(f"{sql_query}")
+        print(f"```")
+        print(f"📊 Executing query...")
+        
         # Add the generated SQL to the state
         return {
             "sql_query": sql_query,

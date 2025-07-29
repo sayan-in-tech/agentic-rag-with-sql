@@ -78,6 +78,12 @@ def execute_sql_query(state: State) -> dict:
         # Fetch results
         rows = cursor.fetchall()
         
+        # Print execution results
+        print(f"✅ Query executed successfully!")
+        print(f"📊 Results: {len(rows)} rows returned")
+        if columns:
+            print(f"📋 Columns: {', '.join(columns)}")
+        
         # Format results as text
         if not rows:
             result_text = "Query executed successfully. No results returned."
