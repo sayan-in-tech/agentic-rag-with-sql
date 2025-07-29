@@ -7,6 +7,15 @@ def chatbot(state: State) -> State:
     user_msg = state["messages"][-1]
     user_input = user_msg.content
 
+    # Check if LLM is available
+    if llm is None:
+        error_msg = "LLM not available. Please check your Google API key configuration."
+        print(f"Error: {error_msg}")
+        ai_msg = AIMessage(content=error_msg)
+        state["messages"].append(ai_msg)
+        state["memory"] = state["memory"] + [user_msg, ai_msg]
+        return state
+
     # Check if we have SQL output from previous execution
     sql_output = state.get("sql_output", "")
     
@@ -40,10 +49,15 @@ def chatbot(state: State) -> State:
     # Stream response from Gemini
     response_text = ""
     print("Assistant (streaming): ", end="", flush=True)
-    for chunk in llm.stream([SystemMessage(content=prompt)]):
-        print(chunk.content, end="", flush=True)
-        response_text += chunk.content
-    print()
+    try:
+        for chunk in llm.stream([SystemMessage(content=prompt)]):
+            print(chunk.content, end="", flush=True)
+            response_text += chunk.content
+        print()
+    except Exception as e:
+        error_msg = f"Error generating response: {str(e)}"
+        print(f"\nError: {error_msg}")
+        response_text = error_msg
 
     ai_msg = AIMessage(content=response_text)
     state["messages"].append(ai_msg)

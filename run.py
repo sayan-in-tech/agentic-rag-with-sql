@@ -1,4 +1,4 @@
-from services.chat.chatbot import run_chatbot
+from services.chat.chat import run_chatbot
 from utils.cache_cleaner import clean_pycache
 
 # Load environment variables
