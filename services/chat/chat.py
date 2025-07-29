@@ -24,6 +24,11 @@ def run_chatbot():
                 print("Bye Bye!")
                 break
 
+            # Validate user input
+            if not user_input or not user_input.strip():
+                print("Please provide a valid message.")
+                continue
+
             # Add user message to state
             state["messages"].append(HumanMessage(content=user_input))
             
@@ -33,7 +38,7 @@ def run_chatbot():
                 state.update(output)
             except Exception as e:
                 error_msg = f"Error processing your request: {str(e)}"
-                print(f"Error: {error_msg}")
+                print(f"❌ [services/chat/chat.py:run_chatbot] {error_msg}")
                 # Add error message to state
                 state["messages"].append(SystemMessage(content=error_msg))
                 
@@ -41,5 +46,5 @@ def run_chatbot():
             print("\n\nGoodbye!")
             break
         except Exception as e:
-            print(f"Unexpected error: {str(e)}")
+            print(f"❌ [services/chat/chat.py:run_chatbot] Unexpected error: {str(e)}")
             continue

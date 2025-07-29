@@ -18,11 +18,10 @@ def load_llm():
         return ChatGoogleGenerativeAI(
             model="gemini-1.5-pro",
             google_api_key=api_key,
-            temperature=0.3,
-            convert_system_message_to_human=True
+            temperature=0.3
         )
     except Exception as e:
-        print(f"Error initializing LLM: {str(e)}")
+        print(f"❌ [services/llm_connector/llm_connector.py:load_llm] Error initializing LLM: {str(e)}")
         print("\nTo fix this issue:")
         print("1. Get a Google API key from: https://makersuite.google.com/app/apikey")
         print("2. Set it as an environment variable:")
@@ -38,7 +37,7 @@ def load_vectorstore():
         embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         return FAISS.load_local("RAG/faiss_index", embedding_model, allow_dangerous_deserialization=True)
     except Exception as e:
-        print(f"Error loading vectorstore: {str(e)}")
+        print(f"❌ [services/llm_connector/llm_connector.py:load_vectorstore] Error loading vectorstore: {str(e)}")
         print("Make sure the RAG/faiss_index directory exists and contains the index files.")
         raise
 
@@ -49,7 +48,7 @@ def retrieve_context(query: str, k: int = 3) -> str:
         docs = vectorstore.similarity_search(query, k=k)
         return "\n\n".join([doc.page_content for doc in docs])
     except Exception as e:
-        print(f"Error retrieving context: {str(e)}")
+        print(f"❌ [services/llm_connector/llm_connector.py:retrieve_context] Error retrieving context: {str(e)}")
         return ""
 
 # Initialize LLM only if API key is available

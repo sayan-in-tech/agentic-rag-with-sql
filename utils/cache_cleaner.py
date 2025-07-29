@@ -1,18 +1,15 @@
 import os
 import shutil
-from pathlib import Path
 
 def clean_pycache():
-    """
-    Recursively removes all __pycache__ directories in the project.
-    """
-    project_root = Path(__file__).parent.parent.parent
-    for root, dirs, files in os.walk(project_root):
-        if '__pycache__' in dirs:
-            cache_dir = os.path.join(root, '__pycache__')
-            try:
-                shutil.rmtree(cache_dir)
-            except Exception as e:
-                print(f"Error cleaning {cache_dir}: {str(e)}") 
-
-    print("Cache cleaned successfully")
+    """Clean all __pycache__ directories"""
+    try:
+        for root, dirs, files in os.walk('.'):
+            for dir_name in dirs:
+                if dir_name == '__pycache__':
+                    cache_path = os.path.join(root, dir_name)
+                    shutil.rmtree(cache_path)
+                    
+        print("Cache cleaned successfully")
+    except Exception as e:
+        print(f"❌ [utils/cache_cleaner.py:clean_pycache] Error cleaning cache: {str(e)}")

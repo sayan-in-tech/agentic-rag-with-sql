@@ -124,6 +124,7 @@ def execute_sql_query(state: State) -> dict:
         
     except sqlite3.Error as e:
         error_msg = f"Database error: {str(e)}"
+        print(f"❌ [services/sql/execute_sql_query.py:execute_sql_query] {error_msg}")
         return {
             "status": "error",
             "results": error_msg,
@@ -133,6 +134,7 @@ def execute_sql_query(state: State) -> dict:
         }
     except Exception as e:
         error_msg = f"Error executing SQL query: {str(e)}"
+        print(f"❌ [services/sql/execute_sql_query.py:execute_sql_query] {error_msg}")
         return {
             "status": "error", 
             "results": error_msg,
