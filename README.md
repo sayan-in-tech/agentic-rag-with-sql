@@ -140,23 +140,65 @@ Assistant: [Lists system capabilities and benefits]
 
 ```mermaid
 graph TD
-    A[User Input] --> B[Classification Node]
-    B --> C{SQL Needed?}
-    C -->|Yes| D[SQL Generation]
-    C -->|No| E[RAG Chat]
-    D --> F[SQL Execution]
-    F --> G[Response Generation]
-    E --> G
-    G --> H[User Interface]
+    A[User Input] --> B[System Entry Point]
+    B --> C[Graph Workflow Orchestrator]
+    C --> D[Start Node]
+    D --> E[Classification Node]
     
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
-    style E fill:#fce4ec
-    style F fill:#e8f5e8
-    style G fill:#f1f8e9
-    style H fill:#e3f2fd
+    E --> F{SQL Needed?}
+    F -->|Yes| G[SQL Generation Node]
+    F -->|No| H[RAG Chatbot Node]
+    
+    G --> I[Query Execution Node]
+    I --> J[Result Formatter]
+    J --> H
+    
+    H --> K[LLM Response Generation]
+    K --> L[User Output]
+    
+    subgraph "RAG System"
+        M[Knowledge Base]
+        O["Embeddings - HuggingFace"]
+        N["Vector Index - FAISS"]
+        P[Context Retrieval]
+        M --> O
+        O --> N
+        N --> P
+    end
+    
+    subgraph "Database Layer"
+        Q[Relational Database]
+        R[SQL Executor]
+        Q --> R
+    end
+    
+    subgraph "LLM Services"
+        S[Google Gemini]
+        T[Intent Classification]
+        U[SQL Generation]
+        V[Conversational Response]
+        S --> T
+        S --> U
+        S --> V
+    end
+    
+    E --> T
+    G --> U
+    G --> P
+    H --> V
+    I --> R
+    
+    %% style A fill:#e1f5fe
+    %% style B fill:#bbdefb
+    %% style C fill:#c8e6c9
+    %% style E fill:#fff3e0
+    %% style F fill:#ff9800,color:#fff
+    %% style G fill:#e8f5e8
+    %% style H fill:#fce4ec
+    %% style I fill:#e8f5e8
+    %% style K fill:#f1f8e9
+    %% style L fill:#e3f2fd
+
 ```
 
 ### **Core Components**
